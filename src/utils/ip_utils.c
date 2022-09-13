@@ -52,35 +52,40 @@ bool is_ipv4_valid(const char* str) {
   memset(ipv4, 0, (str_len + 1));
   strncpy(ipv4, str, str_len);
 
+  // Can't directly return inside the while loop cause we need to
+  // free ipv4, so either free(ipv4) multiple times inside the ifs
+  // in the while loop or just save the is_valid and free at the end
+  bool is_valid = true;
+
   // total_numbers will be the total of 'number components' of the ip
   // e.g.: 12.12.12 would have total_numbers = 3 (3 number components)
   // so if total_numbers is bigger or smaller than 4 the ipv4 is already invalid
   int total_numbers = 0;
   char* number_token = strtok(ipv4, ".");
 
-  free(ipv4);
-
-  while(number_token != NULL) {
-    if ((++total_numbers) > 4) return false;
+  while(number_token != NULL && is_valid) {
+    if ((++total_numbers) > 4) is_valid = false;
 
     bool number_is_zero = strcmp(number_token, "0") == 0;
     
     // If number is zero it's already valid so just continue
     // e.g.: 0.0.0.0 is valid
     if (!number_is_zero) {
-      if (number_token[0] == '0') return false;
+      if (number_token[0] == '0') is_valid = false;
 
       int int_number = atoi(number_token);
 
-      if (int_number <= 0 || int_number > 256) return false;
+      if (int_number <= 0 || int_number > 256) is_valid = false;
     }
 
     number_token = strtok(NULL, ".");
   }
 
+  free(ipv4);
+
   if (total_numbers < 4) return false;
 
-  return true;
+  return is_valid;
 }
 
 bool is_port_valid(const char* port) {
