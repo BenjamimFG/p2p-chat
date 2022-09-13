@@ -17,7 +17,7 @@
  * @param port Number of the port to listen to
  * @returns File descriptor of the server socket
 */
-int start_server_and_listen(int port) {
+int start_server_and_listen(const int port) {
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_fd < 0) {
@@ -46,7 +46,7 @@ int start_server_and_listen(int port) {
   return server_fd;
 }
 
-Client* wait_for_client(int server_fd) {
+Client* wait_for_client(const int server_fd) {
   Client* client = (Client*) malloc(sizeof(Client));
   memset(client, 0, sizeof(Client));
 

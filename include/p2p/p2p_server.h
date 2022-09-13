@@ -33,8 +33,8 @@ typedef struct _server_thread_args {
   volatile ServerState* server_state;
 } ServerThreadArgs;
 
-int start_server_and_listen(int port);
-Client* wait_for_client(int server_fd);
+int start_server_and_listen(const int port);
+Client* wait_for_client(const int server_fd);
 void* server_thread_function(void* args);
 
 #endif
