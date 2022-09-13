@@ -128,7 +128,10 @@ int main(int argc, char const *argv[]) {
           WINDOW* error_window = create_window_centered(14, 60);
           char error_msg[30] = "Invalid connect ip or port.";
           draw_error_window(error_window, error_msg);
+
+          delwin(error_window);
           
+          endwin();
           return EXIT_FAILURE;
         }
         
