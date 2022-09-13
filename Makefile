@@ -23,12 +23,6 @@ $(BUILD_DIR)/%.c.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(INC_FLAGS) -c $< -o $@
 
-.PHONY: chat
-chat: $(BUILD_DIR)/chat
-
-$(BUILD_DIR)/chat: chat_window.c
-	$(CC) $(CFLAGS) $(INC_FLAGS) $(LIB_FLAGS) $^ -o $@
-
 .PHONY: clean
 clean:
 	rm -r $(BUILD_DIR)
