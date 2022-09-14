@@ -8,7 +8,6 @@
 
 #include "p2p_server.h"
 #include "main_menu.h"
-#include "window_utils.h"
 #include "connect_window.h"
 #include "ip_utils.h"
 #include "error_window.h"
@@ -113,7 +112,6 @@ int main(int argc, char const *argv[]) {
         WINDOW* connect_window = create_window_centered(12, 82);
 
         draw_connect_window(connect_window);
-        add_title(connect_window, "Connect to peer");
 
         char* ip_and_port = get_connect_ip_and_port(connect_window);
 
