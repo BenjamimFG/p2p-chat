@@ -2,16 +2,12 @@
 #define MAIN_MENU_H
 
 #include <ncurses.h>
-#include <signal.h>
 
 #include "p2p_server.h"
 
-// Width and Height
+// Width and Height of main menu
 #define MAIN_MENU_WIDTH 36
 #define MAIN_MENU_HEIGHT 14
-
-// Number of options in the menu
-#define N_OPTIONS 2
 
 typedef enum _main_menu_option {
   NO_OPTION = -1,
@@ -22,11 +18,18 @@ typedef enum _main_menu_option {
 typedef struct _menu_thread_args {
   WINDOW* window;
   char username[MAX_USERNAME_SIZE];
-  volatile sig_atomic_t* result;
+  volatile MainMenuOption* result;
 } MenuThreadArgs;
 
-void draw_menu(WINDOW* window, char* username);
-int select_item(WINDOW* window, char* username);
-void* menu_thread_func(void* args);
+/**
+ * Thread function for the main menu thread. Draws the main menu
+ * and waits till the user selects an option. Sets the args->result
+ * to the selected option.
+ * 
+ * @param args Arguments should actually be of MenuThreadArgs* type
+ * 
+ * @returns NULL
+*/
+extern void* menu_thread_func(void* args);
 
 #endif
