@@ -1,30 +1,29 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
 #include <ncurses.h>
+#include <netinet/in.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "p2p_server.h"
-#include "yes_no_window.h"
 #include "window_utils.h"
+#include "yes_no_window.h"
 
-/**
- * Creates a TCP socket and set it to listen to port, returning the socket file descriptor
- * @param port Number of the port to listen to
- * @returns File descriptor of the server socket
-*/
-int start_server_and_listen(const int port) {
+extern int start_server_and_listen(const int port) {
+  // Create ipv4 socket
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_fd < 0) {
-    perror("Error while creating listener socket");
+    perror("Error while creating server socket");
     exit(EXIT_FAILURE);
   }
 
+  // Struct that holds the address we'll bind to, family is ipv4
+  // INADDR_ANY makes it so the socket can receive packets from all interfaces
+  // htons needs to be called on the port to convert from host to network byte order
   const struct sockaddr_in address = {
     .sin_family = AF_INET,
     .sin_addr.s_addr = htonl(INADDR_ANY),
@@ -38,6 +37,7 @@ int start_server_and_listen(const int port) {
     exit(EXIT_FAILURE);
   }
 
+  // Queue up to 3 connections, shouldn't need many more in a simple p2p application
   if (listen(server_fd, 3) < 0) {
     perror("Error when trying to listen to socket");
     exit(EXIT_FAILURE);
@@ -46,14 +46,23 @@ int start_server_and_listen(const int port) {
   return server_fd;
 }
 
+/**
+ * Blocking function, wait until someone tries to connect to the
+ * socket at server_fd and reads first message as client's username.
+ * 
+ * @param server_fd File descriptor of the server which is listening for client connections
+ * 
+ * @returns Pointer to Client struct with the information of the client that tried to connect
+*/
 Client* wait_for_client(const int server_fd) {
   Client* client = (Client*) malloc(sizeof(Client));
   memset(client, 0, sizeof(Client));
 
+  // Blocks here until a connection is received
   client->client_fd = accept(server_fd, (struct sockaddr*) &client->client_addr, &client->client_addr_len);
   
   if (client->client_fd < 0) {
-    perror("Error when trying to create new accept socket");
+    perror("Error when trying to create client socket");
     exit(EXIT_FAILURE);
   }
 
@@ -66,16 +75,18 @@ Client* wait_for_client(const int server_fd) {
   return client;
 }
 
-void* server_thread_function(void* args) {
+extern void* server_thread_function(void* args) {
   ServerThreadArgs* typed_args = (ServerThreadArgs*) args;
 
   while(1) {
     *typed_args->server_state = WAITING_CONNECTIONS;
 
+    // Blocks until a connection attempt is received
     Client* client = wait_for_client(typed_args->server_fd);
 
     *typed_args->server_state = CONNECTION_ATTEMPT;
 
+    // Prompt user to accept the request
     WINDOW* accept_window = create_window_centered(16, 82);
 
     char question[80] = {0};
@@ -88,14 +99,11 @@ void* server_thread_function(void* args) {
     delwin(accept_window);
 
     if (accept) {
+      // do stuff in the future
       *typed_args->server_state = ACCEPTED_REQUEST;
 
       break;
     }
-    
-    //char* buf = "Hello World!";
-
-    //write(client_fd, buf, strlen(buf));
 
     close(client->client_fd);
   }
