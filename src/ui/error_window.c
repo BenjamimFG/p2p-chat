@@ -18,5 +18,8 @@ void draw_error_window(WINDOW* window, char* msg) {
 
   wrefresh(window);
 
+  noecho();
+  curs_set(0);
+
   getch();
 }
