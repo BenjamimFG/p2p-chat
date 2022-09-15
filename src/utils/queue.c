@@ -1,6 +1,15 @@
+#include <stdlib.h>
+
 #include "queue.h"
 
-Node* node_create(void* data) {
+/**
+ * Creates a Node that holds a pointer to data and a NULL pointer to next
+ * 
+ * @param data Pointer to the data the node will hold
+ * 
+ * @returns A pointer to the Node struct
+*/
+Node* node_create(const void* data) {
   Node* node = malloc(sizeof(Node));
   
   node->data = data;
@@ -18,7 +27,7 @@ Queue* queue_create() {
   return q;
 }
 
-void queue_add(Queue* q, void* data) {
+void queue_add(Queue* q, const void* data) {
   if (q->head == NULL) {
     q->head = node_create(data);
     q->size++;

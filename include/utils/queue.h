@@ -1,8 +1,6 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include <stdlib.h>
-
 typedef struct _node {
   void* data;
   struct _node* next;
@@ -12,15 +10,6 @@ typedef struct _queue {
   Node* head;
   size_t size;
 } Queue;
-
-/**
- * Creates a Node that holds a pointer to data and a NULL pointer to next
- * 
- * @param data Pointer to the data the node will hold
- * 
- * @returns A pointer to the Node struct
-*/
-Node* node_create(void* data);
 
 /**
  * Creates a Queue struct and initializes it with size 0 and head NULL.
@@ -35,7 +24,7 @@ Queue* queue_create();
  * @param q A pointer to the Queue struct to modify
  * @param data A void pointer to the data to be stored in the Queue
 */
-void queue_add(Queue* q, void* data);
+void queue_add(Queue* q, const void* data);
 
 /**
  * Removes the first Node from the Queue, returns the data stored in it and decrements the Queue size.
