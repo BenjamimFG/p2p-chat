@@ -12,6 +12,6 @@
  * 
  * @return Returns a pointer to a string of length 'n'
  */
-char* char_repeat(char c, int n);
+char* char_repeat(const char c, const int n);
 
 #endif

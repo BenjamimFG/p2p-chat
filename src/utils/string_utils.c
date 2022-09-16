@@ -3,7 +3,7 @@
 
 #include "string_utils.h"
 
-char* char_repeat(char c, int n) {
+char* char_repeat(const char c, const int n) {
   char* str = malloc(n * sizeof(char));
   memset(str, 0, n);
 
