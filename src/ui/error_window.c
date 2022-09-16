@@ -4,9 +4,7 @@
 #include "error_window.h"
 #include "window_utils.h"
 
-void draw_error_window(WINDOW* window, char* msg) {
-  box(window, 0, 0);
-
+void draw_error_window(WINDOW* window, const char* msg) {
   add_title(window, "Error");
 
   int start_y = (getmaxy(window) - 2) / 2;

@@ -16,9 +16,8 @@ typedef enum _main_menu_option {
 } MainMenuOption;
 
 typedef struct _menu_thread_args {
-  WINDOW* window;
-  char username[MAX_USERNAME_SIZE];
   volatile MainMenuOption* result;
+  char username[MAX_USERNAME_SIZE + 1];
 } MenuThreadArgs;
 
 /**

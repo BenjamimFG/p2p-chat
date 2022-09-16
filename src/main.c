@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +9,6 @@
 
 #include "p2p_server.h"
 #include "main_menu.h"
-#include "connect_window.h"
 #include "ip_utils.h"
 #include "error_window.h"
 
@@ -55,13 +55,10 @@ int main(int argc, char const *argv[]) {
   setlocale(LC_ALL, "");
   initscr();
 
-  WINDOW* main_menu_window = create_window_centered(MAIN_MENU_HEIGHT, MAIN_MENU_WIDTH);
-
   // Volatile cause this will be changed in another thread
   volatile MainMenuOption menu_res = NO_OPTION;
 
   MenuThreadArgs menu_args = {
-    .window = main_menu_window,
     .result = &menu_res
   };
 
@@ -70,8 +67,6 @@ int main(int argc, char const *argv[]) {
   // Main menu thread will run parallel to the server thread, whichever ends 
   pthread_t menu_thread;
   pthread_create(&menu_thread, NULL, &menu_thread_func, (void*) &menu_args);
-
-  // Queue* message_queue = queue_create();
 
   // This keeps looping until the user selects an option in 
   // the menu or the user receives a connection request
@@ -92,8 +87,7 @@ int main(int argc, char const *argv[]) {
 
       // If it wasnt then the only other possible server_state is WAITING_CONNECTIONS again
       // then the menu thread is restarted and the screen is cleared
-      clear();
-      refresh();
+      clear_screen();
 
       menu_res = NO_OPTION;
 
@@ -105,31 +99,29 @@ int main(int argc, char const *argv[]) {
     switch(menu_res) {
       case CONNECT_PEER:
         pthread_cancel(server_thread);
-        delwin(main_menu_window);
-        clear();
-        refresh();
+        clear_screen();
 
-        WINDOW* connect_window = create_window_centered(12, 82);
+        WINDOW* connect_window = create_window_centered(12, 82, true);
 
-        draw_connect_window(connect_window);
+        add_title(connect_window, "Connect to peer");
+        add_header(connect_window, "Type the ip and port to connect to: (format: 256.256.256.256:65535)");
 
-        char* ip_and_port = get_connect_ip_and_port(connect_window);
+        char* ip_and_port = get_string(connect_window, 22, "> ", 3, 1);
 
         Ipv4Port* parsed_connect_address = parse_ipv4_and_port(ip_and_port);
 
         delwin(connect_window);
 
-        clear();
-        refresh();
+        clear_screen();
 
         if (parsed_connect_address == NULL) {
-          WINDOW* error_window = create_window_centered(14, 60);
-          char error_msg[30] = "Invalid connect ip or port.";
-          draw_error_window(error_window, error_msg);
+          WINDOW* error_window = create_window_centered(14, 60, true);
+
+          draw_error_window(error_window, "Invalid connect ip or port.");
 
           delwin(error_window);
-          
           endwin();
+
           return EXIT_FAILURE;
         }
         
@@ -139,7 +131,6 @@ int main(int argc, char const *argv[]) {
       case NO_OPTION:
       case EXIT:
         pthread_cancel(server_thread);
-        delwin(main_menu_window);
         break;
     }
 

@@ -9,7 +9,7 @@
  * 
  * @returns A pointer to the Node struct
 */
-Node* node_create(const void* data) {
+Node* node_create(void* data) {
   Node* node = malloc(sizeof(Node));
   
   node->data = data;
@@ -27,7 +27,7 @@ Queue* queue_create() {
   return q;
 }
 
-void queue_add(Queue* q, const void* data) {
+void queue_add(Queue* q, void* data) {
   if (q->head == NULL) {
     q->head = node_create(data);
     q->size++;

@@ -6,6 +6,6 @@
 
 #include "window_utils.h"
 
-void draw_error_window(WINDOW* window, char* msg);
+extern void draw_error_window(WINDOW* window, const char* msg);
 
 #endif

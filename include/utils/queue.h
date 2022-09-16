@@ -24,7 +24,7 @@ Queue* queue_create();
  * @param q A pointer to the Queue struct to modify
  * @param data A void pointer to the data to be stored in the Queue
 */
-void queue_add(Queue* q, const void* data);
+void queue_add(Queue* q, void* data);
 
 /**
  * Removes the first Node from the Queue, returns the data stored in it and decrements the Queue size.

@@ -19,16 +19,9 @@ char options[N_OPTIONS][20] = {
  * Draws the main menu into window.
  * 
  * @param window Pointer to the ncurses WINDOW to be drawn to
- * @param username Username to be displayed in the 'header' of the main meanu
  * @param selected Option to be highlighted in the main menu
 */
-void draw_menu(WINDOW* window, char* username, MainMenuOption selected) {  
-  box(window, 0, 0);
-
-  add_title(window, "Main menu");
-
-  mvwprintw(window, 1, 1, "Connected as: %s", username);
-
+void draw_menu(WINDOW* window, MainMenuOption selected) {
   // Loop through the options array and print each option to the screen
   // jumping 1 row each time and highlighting the option if it's selected
   for (int i = 0; i < N_OPTIONS; ++i) {
@@ -50,12 +43,11 @@ void draw_menu(WINDOW* window, char* username, MainMenuOption selected) {
 /**
  * Selects an option from window.
  * 
- * @param window Pointer to the ncurses window to get input from.
- * @param username Username to be displayed in header, used when recalling draw_window
+ * @param window Pointer to the ncurses window to get input from
  * 
  * @returns The MainMenuOption value for the option the user selected 
 */
-MainMenuOption select_item(WINDOW* window, char* username) {
+MainMenuOption select_item(WINDOW* window) {
   noecho();
   keypad(window, TRUE);
   curs_set(0);
@@ -70,13 +62,13 @@ MainMenuOption select_item(WINDOW* window, char* username) {
         selected++;
         selected = selected % (N_OPTIONS);
 
-        draw_menu(window, username, selected);
+        draw_menu(window, selected);
         break;
       case KEY_UP:
         selected--;
         if (selected < 0) selected = (N_OPTIONS - 1);
 
-        draw_menu(window, username, selected);
+        draw_menu(window, selected);
         break;
       default:
         break;
@@ -89,12 +81,18 @@ MainMenuOption select_item(WINDOW* window, char* username) {
 extern void* menu_thread_func(void* args) {
   MenuThreadArgs typed_args = *(MenuThreadArgs*) args;
 
-  WINDOW* window = typed_args.window;
-  char username[MAX_USERNAME_SIZE];
-  strcpy(username, typed_args.username);
+  WINDOW* window = create_window_centered(MAIN_MENU_HEIGHT, MAIN_MENU_WIDTH, true);
 
-  draw_menu(window, username, DEFAULT_OPTION);
-  int selected = select_item(window, username);
+  char header[15 + MAX_USERNAME_SIZE];
+  snprintf(header, 15 + MAX_USERNAME_SIZE, "Connected as: %s", typed_args.username);
+  
+  add_title(window, "Main menu");
+  add_header(window, header);
+
+  draw_menu(window, DEFAULT_OPTION);
+  int selected = select_item(window);
+
+  delwin(window);
 
   *typed_args.result = selected;
 

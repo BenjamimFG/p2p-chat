@@ -10,7 +10,6 @@
 
 #include "p2p_server.h"
 #include "window_utils.h"
-#include "yes_no_window.h"
 
 extern int start_server_and_listen(const int port) {
   // Create ipv4 socket
@@ -78,7 +77,7 @@ Client* wait_for_client(const int server_fd) {
 extern void* server_thread_function(void* args) {
   ServerThreadArgs* typed_args = (ServerThreadArgs*) args;
 
-  while(1) {
+  while(true) {
     *typed_args->server_state = WAITING_CONNECTIONS;
 
     // Blocks until a connection attempt is received
@@ -87,14 +86,12 @@ extern void* server_thread_function(void* args) {
     *typed_args->server_state = CONNECTION_ATTEMPT;
 
     // Prompt user to accept the request
-    WINDOW* accept_window = create_window_centered(16, 82);
+    WINDOW* accept_window = create_window_centered(16, 82, true);
 
     char question[80] = {0};
-    sprintf(question, "Accept request to chat from %s (%s)?", client->username, client->ip_address);
+    sprintf(question, "Accept request to chat from %s (%s)? [y/N]", client->username, client->ip_address);
 
-    draw_yes_no_window(accept_window, question);
-
-    bool accept = get_answer(accept_window);
+    bool accept = get_y_n(accept_window, question, 1, 1);
 
     delwin(accept_window);
 
