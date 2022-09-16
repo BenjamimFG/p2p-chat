@@ -2,7 +2,7 @@
 
 #include "window_utils.h"
 
-void add_title(WINDOW* window, char* title) {
+void add_title(WINDOW* window, const char* title) {
   // Save initial cursor position
   int old_y, old_x;
   getyx(window, old_y, old_x);
@@ -15,7 +15,7 @@ void add_title(WINDOW* window, char* title) {
   wrefresh(window);
 }
 
-WINDOW* create_window_centered(int height, int width) {
+WINDOW* create_window_centered(const int height, const int width) {
   int screen_height, screen_width;
   getmaxyx(stdscr, screen_height, screen_width);
 

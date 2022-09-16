@@ -10,7 +10,7 @@
  * @param window Nucrses window to add the title to
  * @param title Title to be added to window
 */
-void add_title(WINDOW* window, char* title);
+void add_title(WINDOW* window, const char* title);
 
 /**
  * Creates a Ncurses WINDOW centered in the screen and returns a pointer to it.
@@ -20,6 +20,6 @@ void add_title(WINDOW* window, char* title);
  * 
  * @returns Pointer to the window
 */
-WINDOW* create_window_centered(int height, int width);
+WINDOW* create_window_centered(const int height, const int width);
 
 #endif
