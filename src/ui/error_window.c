@@ -12,7 +12,7 @@ void draw_error_window(WINDOW* window, const char* msg) {
 
   mvwprintw(window, start_y, start_x, msg);
 
-  mvwprintw(window, getmaxy(window) - 2, 1, "Press any key to exit...");
+  mvwprintw(window, getmaxy(window) - 2, 1, "Press any key to continue...");
 
   wrefresh(window);
 

@@ -119,10 +119,14 @@ int main(int argc, char const *argv[]) {
 
           draw_error_window(error_window, "Invalid connect ip or port.");
 
-          delwin(error_window);
-          endwin();
+          // Restart menu and server thread
+          clear_screen();
+          menu_res = NO_OPTION;
 
-          return EXIT_FAILURE;
+          pthread_create(&menu_thread, NULL, &menu_thread_func, (void*) &menu_args);
+          pthread_create(&server_thread, NULL, &server_thread_function, (void*) &server_args);
+
+          continue;
         }
         
         break;
