@@ -11,6 +11,7 @@
 #include "main_menu.h"
 #include "ip_utils.h"
 #include "error_window.h"
+#include "p2p_client.h"
 
 /**
  * Prints program usage to the stderr stream
@@ -70,7 +71,7 @@ int main(int argc, char const *argv[]) {
 
   // This keeps looping until the user selects an option in 
   // the menu or the user receives a connection request
-  while (TRUE) {
+  while (true) {
     if (menu_res == NO_OPTION && server_state == WAITING_CONNECTIONS) continue;
 
     if (server_state == CONNECTION_ATTEMPT) {
@@ -88,9 +89,6 @@ int main(int argc, char const *argv[]) {
       // If it wasnt then the only other possible server_state is WAITING_CONNECTIONS again
       // then the menu thread is restarted and the screen is cleared
       clear_screen();
-
-      menu_res = NO_OPTION;
-
       pthread_create(&menu_thread, NULL, &menu_thread_func, (void*) &menu_args);
 
       continue;
@@ -121,8 +119,27 @@ int main(int argc, char const *argv[]) {
 
           // Restart menu and server thread
           clear_screen();
-          menu_res = NO_OPTION;
+          pthread_create(&menu_thread, NULL, &menu_thread_func, (void*) &menu_args);
+          pthread_create(&server_thread, NULL, &server_thread_function, (void*) &server_args);
 
+          continue;
+        }
+        
+        // Should be valid cause parsed_connect_address was validated before
+        int server_port = atoi(parsed_connect_address->port);
+
+        int client_fd = connect_to_server(parsed_connect_address->ip, server_port, username);
+
+        if (client_fd < 0) {
+          WINDOW* error_window = create_window_centered(14, 60, true);
+
+          char err_msg[70];
+          snprintf(err_msg, 70, "Could not connect to peer at %s:%d", parsed_connect_address->ip, server_port);
+
+          draw_error_window(error_window, err_msg);
+
+          // Restart menu and server thread
+          clear_screen();
           pthread_create(&menu_thread, NULL, &menu_thread_func, (void*) &menu_args);
           pthread_create(&server_thread, NULL, &server_thread_function, (void*) &server_args);
 

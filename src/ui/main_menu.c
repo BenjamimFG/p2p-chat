@@ -81,6 +81,9 @@ MainMenuOption select_item(WINDOW* window) {
 extern void* menu_thread_func(void* args) {
   MenuThreadArgs typed_args = *(MenuThreadArgs*) args;
 
+  // Always initialize to NO_OPTION since thread function just started
+  *typed_args.result = NO_OPTION;
+
   WINDOW* window = create_window_centered(MAIN_MENU_HEIGHT, MAIN_MENU_WIDTH, true);
 
   char header[15 + MAX_USERNAME_SIZE];
