@@ -1,5 +1,5 @@
-#ifndef P2P_SERVER_H
-#define P2P_SERVER_H
+#ifndef P2P_CHAT_H
+#define P2P_CHAT_H
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -55,5 +55,18 @@ extern int start_server_and_listen(const int port);
  * @returns NULL
 */
 extern void* server_thread_function(void* args);
+
+/**
+ * Connects to the host listening on address ipv4 and port over a TCP socket,
+ * then sends the user's username so it can be read by the server side code.
+ * 
+ * @param ipv4 Pointer to the string of the ipv4 address to connect to
+ * @param port Port the other user is running their p2p_chat on
+ * @param username User's username to be sent on a connection attempt
+ * 
+ * @returns File descriptor of the client socket created for the connection, -1 if
+ * cannot connect.
+*/
+extern int connect_to_server(const char* ipv4, const int port, const char* username);
 
 #endif

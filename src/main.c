@@ -1,17 +1,16 @@
+#include <locale.h>
+#include <ncurses.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <ncurses.h>
-#include <locale.h>
 
-#include "p2p_server.h"
-#include "main_menu.h"
-#include "ip_utils.h"
 #include "error_window.h"
-#include "p2p_client.h"
+#include "ip_utils.h"
+#include "main_menu.h"
+#include "p2p_chat.h"
 
 /**
  * Prints program usage to the stderr stream

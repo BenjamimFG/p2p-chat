@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "main_menu.h"
-#include "p2p_server.h"
+#include "p2p_chat.h"
 #include "window_utils.h"
 
 // Number of options in the menu

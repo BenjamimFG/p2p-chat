@@ -3,7 +3,7 @@
 
 #include <ncurses.h>
 
-#include "p2p_server.h"
+#include "p2p_chat.h"
 
 // Width and Height of main menu
 #define MAIN_MENU_WIDTH 36
