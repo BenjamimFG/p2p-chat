@@ -14,6 +14,7 @@
 
 /**
  * Prints program usage to the stderr stream
+ * 
  * @param bin_name Name of the binary to be displayed in the usage message (usually argv[0])
 */
 void usage(const char* bin_name) {
@@ -45,7 +46,7 @@ int main(int argc, char const *argv[]) {
     .server_state = &server_state
   };
 
-  // The server thread will keep listening and waiting for a client to connect
+  // The server thread will keep listening and waiting for a peer to connect
   // in the background, until the user accepts a connection or selects an option
   // in the main menu
   pthread_t server_thread;
@@ -127,7 +128,7 @@ int main(int argc, char const *argv[]) {
         // Should be valid cause parsed_connect_address was validated before
         int server_port = atoi(parsed_connect_address->port);
 
-        int client_fd = connect_to_server(parsed_connect_address->ip, server_port, username);
+        int client_fd = connect_to_peer(parsed_connect_address->ip, server_port, username);
 
         if (client_fd < 0) {
           WINDOW* error_window = create_window_centered(14, 60, true);

@@ -47,31 +47,31 @@ extern int start_server_and_listen(const int port) {
 
 /**
  * Blocking function, wait until someone tries to connect to the
- * socket at server_fd and reads first message as client's username.
+ * socket at server_fd and reads first message as peer's username.
  * 
- * @param server_fd File descriptor of the server which is listening for client connections
+ * @param server_fd File descriptor of the server which is listening for peer connections
  * 
- * @returns Pointer to Client struct with the information of the client that tried to connect
+ * @returns Pointer to Peer struct with the information of the peer that tried to connect
 */
-Client* wait_for_client(const int server_fd) {
-  Client* client = (Client*) malloc(sizeof(Client));
-  memset(client, 0, sizeof(Client));
+Peer* wait_for_peer(const int server_fd) {
+  Peer* peer = (Peer*) malloc(sizeof(Peer));
+  memset(peer, 0, sizeof(Peer));
 
   // Blocks here until a connection is received
-  client->client_fd = accept(server_fd, (struct sockaddr*) &client->client_addr, &client->client_addr_len);
+  peer->fd = accept(server_fd, (struct sockaddr*) &peer->address, &peer->address_len);
   
-  if (client->client_fd < 0) {
-    perror("Error when trying to create client socket");
+  if (peer->fd < 0) {
+    perror("Error when trying to create peer socket");
     exit(EXIT_FAILURE);
   }
 
-  // Convert client address into readable format and save into client->ip_address
-  inet_ntop(AF_INET, &client->client_addr.sin_addr.s_addr, client->ip_address, sizeof client->ip_address);
+  // Convert peer address into readable format and save into peer->ipv4
+  inet_ntop(AF_INET, &peer->address.sin_addr.s_addr, peer->ipv4, sizeof peer->ipv4);
 
-  // Read client username
-  read(client->client_fd, client->username, sizeof client->username);
+  // Read peer username
+  read(peer->fd, peer->username, sizeof peer->username);
 
-  return client;
+  return peer;
 }
 
 extern void* server_thread_function(void* args) {
@@ -81,7 +81,7 @@ extern void* server_thread_function(void* args) {
     *typed_args->server_state = WAITING_CONNECTIONS;
 
     // Blocks until a connection attempt is received
-    Client* client = wait_for_client(typed_args->server_fd);
+    Peer* peer = wait_for_peer(typed_args->server_fd);
 
     *typed_args->server_state = CONNECTION_ATTEMPT;
 
@@ -89,7 +89,7 @@ extern void* server_thread_function(void* args) {
     WINDOW* accept_window = create_window_centered(16, 82, true);
 
     char question[80] = {0};
-    sprintf(question, "Accept request to chat from %s (%s)? [y/N]", client->username, client->ip_address);
+    sprintf(question, "Accept request to chat from %s (%s)? [y/N]", peer->username, peer->ipv4);
 
     bool accept = get_y_n(accept_window, question, 1, 1);
 
@@ -102,13 +102,13 @@ extern void* server_thread_function(void* args) {
       break;
     }
 
-    close(client->client_fd);
+    close(peer->fd);
   }
 
   return NULL;
 }
 
-extern int connect_to_server(const char* ipv4, const int port, const char* username) {
+extern int connect_to_peer(const char* ipv4, const int port, const char* username) {
   struct sockaddr_in server_address = {
     .sin_family = AF_INET,
     .sin_port = htons(port)
@@ -122,7 +122,7 @@ extern int connect_to_server(const char* ipv4, const int port, const char* usern
 
   int client_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (client_fd < 0) {
-    perror("Error when trying to create client socket.");
+    perror("Error when trying to create peer socket.");
     exit(EXIT_FAILURE);
   }
 

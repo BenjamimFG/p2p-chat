@@ -13,13 +13,13 @@ typedef enum _server_state {
   ACCEPTED_REQUEST
 } ServerState;
 
-typedef struct _client {
-  struct sockaddr_in client_addr;
-  socklen_t client_addr_len;
-  int client_fd;
+typedef struct _peer {
+  struct sockaddr_in address;
+  socklen_t address_len;
+  int fd;
   char username[MAX_USERNAME_SIZE + 1];
-  char ip_address[16];
-} Client;
+  char ipv4[16];
+} Peer;
 
 typedef struct _message {
   char content[MAX_MESSAGE_SIZE + 1];
@@ -44,7 +44,7 @@ typedef struct _server_thread_args {
 extern int start_server_and_listen(const int port);
 
 /**
- * Thread function of the server. This function will continually wait for a client
+ * Thread function of the server. This function will continually wait for a peer
  * and when a connection arrives will prompt the user to accept or deny it, if the
  * user accepts the connection the server_state is set as ACCEPTED_REQUEST and the 
  * function ends. This function changes the server_state passed in the argumnets
@@ -67,6 +67,6 @@ extern void* server_thread_function(void* args);
  * @returns File descriptor of the client socket created for the connection, -1 if
  * cannot connect.
 */
-extern int connect_to_server(const char* ipv4, const int port, const char* username);
+extern int connect_to_peer(const char* ipv4, const int port, const char* username);
 
 #endif
