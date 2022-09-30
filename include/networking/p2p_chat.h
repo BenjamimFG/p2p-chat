@@ -30,7 +30,9 @@ typedef struct _message {
 
 typedef struct _server_thread_args {
   int server_fd;
+  char username[MAX_USERNAME_SIZE + 1];
   volatile ServerState* server_state;
+  Peer* connected_peer;
 } ServerThreadArgs;
 
 /**
@@ -58,15 +60,18 @@ extern void* server_thread_function(void* args);
 
 /**
  * Connects to the host listening on address ipv4 and port over a TCP socket,
- * then sends the user's username so it can be read by the server side code.
+ * then sends the user's username so it can be read by the peer listening and
+ * receives the peer username. If the peer's username is 0 characters long it
+ * means the peer has refused the connection request.
  * 
  * @param ipv4 Pointer to the string of the ipv4 address to connect to
  * @param port Port the other user is running their p2p_chat on
  * @param username User's username to be sent on a connection attempt
  * 
- * @returns File descriptor of the client socket created for the connection, -1 if
- * cannot connect.
+ * @returns Pointer to the Peer struct of the peer we connected to. The field peer->username
+ * will be 0 characters long if the connection was refused and return will be NULL if the
+ * connection failed.
 */
-extern int connect_to_peer(const char* ipv4, const int port, const char* username);
+extern Peer* connect_to_peer(const char* ipv4, const int port, const char* username);
 
 #endif

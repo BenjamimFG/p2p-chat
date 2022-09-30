@@ -11,6 +11,7 @@
 #include "ip_utils.h"
 #include "main_menu.h"
 #include "p2p_chat.h"
+#include "window_utils.h"
 
 /**
  * Prints program usage to the stderr stream
@@ -37,25 +38,34 @@ int main(int argc, char const *argv[]) {
   char username[MAX_USERNAME_SIZE + 1] = {0};
   strncpy(username, argv[2], MAX_USERNAME_SIZE);
 
-  /// SERVER
+  // Peer struct of the other chat user connected to
+  Peer* connected_peer = (Peer*) malloc(sizeof(Peer));
+  memset(connected_peer, 0, sizeof(Peer));
+
+  /// SERVER ///
   int server_fd = start_server_and_listen(port);
+  // Volatile cause this will be changed in another thread
   volatile ServerState server_state = WAITING_CONNECTIONS;
 
   ServerThreadArgs server_args = {
     .server_fd = server_fd,
-    .server_state = &server_state
+    .server_state = &server_state,
+    .connected_peer = connected_peer
   };
+
+  strncpy(server_args.username, username, MAX_USERNAME_SIZE);
 
   // The server thread will keep listening and waiting for a peer to connect
   // in the background, until the user accepts a connection or selects an option
   // in the main menu
   pthread_t server_thread;
   pthread_create(&server_thread, NULL, &server_thread_function, (void*) &server_args);
-  ///
+  /// END SERVER ///
 
   setlocale(LC_ALL, "");
   initscr();
 
+  /// MAIN MENU ///
   // Volatile cause this will be changed in another thread
   volatile MainMenuOption menu_res = NO_OPTION;
 
@@ -68,6 +78,7 @@ int main(int argc, char const *argv[]) {
   // Main menu thread will run parallel to the server thread, whichever ends 
   pthread_t menu_thread;
   pthread_create(&menu_thread, NULL, &menu_thread_func, (void*) &menu_args);
+  /// END MAIN MENU ///
 
   // This keeps looping until the user selects an option in 
   // the menu or the user receives a connection request
@@ -82,7 +93,6 @@ int main(int argc, char const *argv[]) {
 
       // If request was accepted
       if (server_state == ACCEPTED_REQUEST) {
-        printf("Accepted Request\n");
         break;
       }
 
@@ -128,15 +138,22 @@ int main(int argc, char const *argv[]) {
         // Should be valid cause parsed_connect_address was validated before
         int server_port = atoi(parsed_connect_address->port);
 
-        int client_fd = connect_to_peer(parsed_connect_address->ip, server_port, username);
+        connected_peer = connect_to_peer(parsed_connect_address->ip, server_port, username);
 
-        if (client_fd < 0) {
+        if (connected_peer == NULL || strlen(connected_peer->username) == 0) {
           WINDOW* error_window = create_window_centered(14, 60, true);
 
           char err_msg[70];
-          snprintf(err_msg, 70, "Could not connect to peer at %s:%d", parsed_connect_address->ip, server_port);
+
+          if (connected_peer == NULL)
+            snprintf(err_msg, 70, "Could not connect to peer at %s:%d", parsed_connect_address->ip, server_port);
+          else if (strlen(connected_peer->username) == 0)
+            snprintf(err_msg, 70, "Peer %s:%d refused connection", parsed_connect_address->ip, server_port);
 
           draw_error_window(error_window, err_msg);
+
+          // Reset connected_peer struct to 0
+          memset(connected_peer, 0, sizeof(Peer));
 
           // Restart menu and server thread
           clear_screen();
@@ -160,6 +177,14 @@ int main(int argc, char const *argv[]) {
 
   pthread_join(menu_thread, NULL);
   pthread_join(server_thread, NULL);
+
+  // If address_len is > 0 then a connection was made either through the
+  // server_thread or the user connected through the main menu option
+  if (connected_peer->address_len > 0) {
+    // TODO: Start chat here
+
+    close(connected_peer->fd);
+  }
 
   close(server_fd);
 

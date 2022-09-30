@@ -50,28 +50,22 @@ extern int start_server_and_listen(const int port) {
  * socket at server_fd and reads first message as peer's username.
  * 
  * @param server_fd File descriptor of the server which is listening for peer connections
- * 
- * @returns Pointer to Peer struct with the information of the peer that tried to connect
+ * @param peer_output Pointer to Peer struct that will be written with the output of connected peer 
 */
-Peer* wait_for_peer(const int server_fd) {
-  Peer* peer = (Peer*) malloc(sizeof(Peer));
-  memset(peer, 0, sizeof(Peer));
-
+void wait_for_peer(const int server_fd, Peer* peer_output) {
   // Blocks here until a connection is received
-  peer->fd = accept(server_fd, (struct sockaddr*) &peer->address, &peer->address_len);
+  peer_output->fd = accept(server_fd, (struct sockaddr*) &peer_output->address, &peer_output->address_len);
   
-  if (peer->fd < 0) {
+  if (peer_output->fd < 0) {
     perror("Error when trying to create peer socket");
     exit(EXIT_FAILURE);
   }
 
   // Convert peer address into readable format and save into peer->ipv4
-  inet_ntop(AF_INET, &peer->address.sin_addr.s_addr, peer->ipv4, sizeof peer->ipv4);
+  inet_ntop(AF_INET, &peer_output->address.sin_addr.s_addr, peer_output->ipv4, sizeof peer_output->ipv4);
 
   // Read peer username
-  read(peer->fd, peer->username, sizeof peer->username);
-
-  return peer;
+  recv(peer_output->fd, peer_output->username, MAX_USERNAME_SIZE, 0);
 }
 
 extern void* server_thread_function(void* args) {
@@ -81,7 +75,7 @@ extern void* server_thread_function(void* args) {
     *typed_args->server_state = WAITING_CONNECTIONS;
 
     // Blocks until a connection attempt is received
-    Peer* peer = wait_for_peer(typed_args->server_fd);
+    wait_for_peer(typed_args->server_fd, typed_args->connected_peer);
 
     *typed_args->server_state = CONNECTION_ATTEMPT;
 
@@ -89,47 +83,67 @@ extern void* server_thread_function(void* args) {
     WINDOW* accept_window = create_window_centered(16, 82, true);
 
     char question[80] = {0};
-    sprintf(question, "Accept request to chat from %s (%s)? [y/N]", peer->username, peer->ipv4);
+    sprintf(question, "Accept request to chat from %s (%s)? [y/N]", typed_args->connected_peer->username, typed_args->connected_peer->ipv4);
 
     bool accept = get_y_n(accept_window, question, 1, 1);
 
     delwin(accept_window);
 
     if (accept) {
-      // do stuff in the future
+      // Send username to peer
+      send(typed_args->connected_peer->fd, typed_args->username, MAX_USERNAME_SIZE, 0);
+
       *typed_args->server_state = ACCEPTED_REQUEST;
 
       break;
     }
 
-    close(peer->fd);
+    // Sends an empty message, the peer trying to connect should understand
+    // that an empty message means the connection was refused
+    send(typed_args->connected_peer->fd, NULL, 0, 0);
+
+    close(typed_args->connected_peer->fd);
+
+    // Reset connected_peer struct to 0
+    memset(typed_args->connected_peer, 0, sizeof(Peer));
   }
 
   return NULL;
 }
 
-extern int connect_to_peer(const char* ipv4, const int port, const char* username) {
-  struct sockaddr_in server_address = {
-    .sin_family = AF_INET,
-    .sin_port = htons(port)
-  };
+extern Peer* connect_to_peer(const char* ipv4, const int port, const char* username) {
+  Peer* peer = (Peer*) malloc(sizeof(Peer));
+  memset(peer, 0, sizeof(Peer));
+
+  peer->address.sin_family = AF_INET;
+  peer->address.sin_port = htons(port);
 
   // Should not fail here if ipv4 is valid
-  if (inet_pton(AF_INET, ipv4, &server_address.sin_addr) <= 0) {
-    perror("Error on connect to server, invalid ipv4 address.");
+  if (inet_pton(AF_INET, ipv4, &peer->address.sin_addr) <= 0) {
+    perror("Error on connect to peer, invalid ipv4 address.");
     exit(EXIT_FAILURE);
   }
 
-  int client_fd = socket(AF_INET, SOCK_STREAM, 0);
-  if (client_fd < 0) {
+  peer->address_len = sizeof(peer->address);
+
+  peer->fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (peer->fd < 0) {
     perror("Error when trying to create peer socket.");
     exit(EXIT_FAILURE);
   }
 
-  if (connect(client_fd, (struct sockaddr*) &server_address, sizeof(server_address)) < 0)
-    return -1;
+  if (connect(peer->fd, (struct sockaddr*) &peer->address, sizeof(peer->address)) < 0)
+    return NULL;
 
-  send(client_fd, username, strlen(username), 0);
+  // Send username to peer
+  send(peer->fd, username, strlen(username), 0);
 
-  return client_fd;
+  // Receive peer's username
+  recv(peer->fd, peer->username, MAX_USERNAME_SIZE, 0);
+
+  // If the message received was empty (0 characters) the connection was refused
+  if (strlen(username) == 0)
+    close(peer->fd);
+
+  return peer;
 }
