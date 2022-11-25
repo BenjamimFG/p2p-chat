@@ -71,6 +71,9 @@ bool get_y_n(WINDOW* window, const char* prompt, const int start_y, const int st
 
   const char c = wgetch(window);
 
+  echo();
+  curs_set(1);
+
   return c == 'y' || c == 'Y';
 }
 
