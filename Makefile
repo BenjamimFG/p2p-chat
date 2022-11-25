@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -std=c17 -Wall
+CFLAGS := -std=c17 -Wall -Wextra
 
 LIBS := ncurses pthread
 LIB_FLAGS := $(addprefix -l,$(LIBS))
