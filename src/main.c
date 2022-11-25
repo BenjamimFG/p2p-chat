@@ -7,10 +7,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "chat_window.h"
 #include "error_window.h"
 #include "ip_utils.h"
 #include "main_menu.h"
 #include "p2p_chat.h"
+#include "queue.h"
 #include "window_utils.h"
 
 /**
@@ -42,7 +44,7 @@ int main(int argc, char const *argv[]) {
   Peer* connected_peer = (Peer*) malloc(sizeof(Peer));
   memset(connected_peer, 0, sizeof(Peer));
 
-  /// SERVER ///
+  /// LISTENER ///
   int server_fd = start_server_and_listen(port);
   // Volatile cause this will be changed in another thread
   volatile ServerState server_state = WAITING_CONNECTIONS;
@@ -60,7 +62,7 @@ int main(int argc, char const *argv[]) {
   // in the main menu
   pthread_t server_thread;
   pthread_create(&server_thread, NULL, &server_thread_function, (void*) &server_args);
-  /// END SERVER ///
+  /// END LISTENER ///
 
   setlocale(LC_ALL, "");
   initscr();
@@ -181,9 +183,21 @@ int main(int argc, char const *argv[]) {
   // If address_len is > 0 then a connection was made either through the
   // server_thread or the user connected through the main menu option
   if (connected_peer->address_len > 0) {
-    // TODO: Start chat here
+    pthread_t message_poll_thread;
+    Queue* message_queue = queue_create();
+
+    MessagePollingArgs mPollArgs = {
+      .message_queue = message_queue,
+      .peer = connected_peer
+    };
+    
+    pthread_create(&message_poll_thread, NULL, &message_polling, (void*) &mPollArgs);
+
+    start_chat(message_queue, connected_peer);
 
     close(connected_peer->fd);
+    pthread_cancel(message_poll_thread);
+    queue_free(message_queue);
   }
 
   close(server_fd);

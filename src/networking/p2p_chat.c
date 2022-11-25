@@ -5,10 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "chat_window.h"
 #include "p2p_chat.h"
+#include "queue.h"
+#include "sleep.h"
+#include "time_utils.h"
 #include "window_utils.h"
 
 extern int start_server_and_listen(const int port) {
@@ -66,6 +71,11 @@ void wait_for_peer(const int server_fd, Peer* peer_output) {
 
   // Read peer username
   recv(peer_output->fd, peer_output->username, MAX_USERNAME_SIZE, 0);
+
+  // Remove newline from username if it has a newline
+  if (peer_output->username[strlen(peer_output->username) - 1] == '\n') {
+    peer_output->username[strlen(peer_output->username) - 1] = '\0';
+  }
 }
 
 extern void* server_thread_function(void* args) {
@@ -146,4 +156,47 @@ extern Peer* connect_to_peer(const char* ipv4, const int port, const char* usern
     close(peer->fd);
 
   return peer;
+}
+
+void send_message(const int fd, const char* message) {
+  send(fd, message, strlen(message), 0);
+}
+
+void* message_polling(void* args) {
+  MessagePollingArgs t_args = *(MessagePollingArgs*) args;
+
+  int bytes;
+
+  while (true) {
+    // read how many bytes there are to be read from the socket
+    // if there are 0 bytes to be read then wait for 100ms and continue the loop
+    ioctl(t_args.peer->fd, FIONREAD, &bytes);
+    if (bytes == 0) {
+      // sleep for 100ms to avoid too much polling and spiking CPU usage
+      ms_sleep(100);
+      continue;
+    }
+
+    Message* msg = (Message*) malloc(sizeof(Message));
+    memset(msg, 0, sizeof(Message));
+
+    // copy username from peer to message
+    // get current time string into the message
+    // set username color to default
+    strcpy(msg->username, t_args.peer->username);
+    get_time_str(msg->time_str);
+    msg->username_color = DEFAULT_USERNAME_PAIR;
+
+    // read message from socket's fd into msg->content, read a maximum of MAX_MESSAGE_SIZE bytes
+    recv(t_args.peer->fd, msg->content, MAX_MESSAGE_SIZE, 0);
+
+    // remove new line from message if it has one
+    // the message shouldn't have a \n if sent through this client, but can
+    // happen if its sent raw through an external socket tool 
+    int msg_size = strlen(msg->content);
+    if (msg->content[msg_size - 1] == '\n')
+      msg->content[msg_size - 1] = '\0';
+
+    queue_add(t_args.message_queue, (void*) msg);
+  }
 }

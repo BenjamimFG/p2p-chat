@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "utils/queue.h"
+
 #define MAX_USERNAME_SIZE 20
 #define MAX_MESSAGE_SIZE 80
 
@@ -34,6 +36,11 @@ typedef struct _server_thread_args {
   volatile ServerState* server_state;
   Peer* connected_peer;
 } ServerThreadArgs;
+
+typedef struct _message_polling_args {
+  Queue* message_queue;
+  Peer* peer;
+} MessagePollingArgs;
 
 /**
  * Creates a TCP socket and set it to listen to port, returning
@@ -73,5 +80,22 @@ extern void* server_thread_function(void* args);
  * connection failed.
 */
 extern Peer* connect_to_peer(const char* ipv4, const int port, const char* username);
+
+/**
+ * Thread function that keeps polling the peer FD for new messages.
+ * 
+ * @param args Pointer to the polling arguments, should actually be of type MessagePollingArgs*
+ * 
+ * @returns NULL
+*/
+void* message_polling(void* args);
+
+/**
+ * Send a string message over the socket described by fd.
+ * 
+ * @param fd File descriptor of the socket to send the message through
+ * @param message String that will be sent as a message through the socket
+*/
+void send_message(const int fd, const char* message);
 
 #endif
