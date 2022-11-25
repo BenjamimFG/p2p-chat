@@ -17,6 +17,7 @@
 typedef struct dequeuer_args {
   Queue* message_queue;
   WINDOW* chat_win;
+  WINDOW* input_win;
   int max_messages;
   pthread_mutex_t* cursor_mutex;
 } DequeuerArgs;
@@ -197,9 +198,18 @@ void* message_dequeuer(void* args) {
     // message's  content was added to the array so it can be freed
     free(message);
 
-    // acquire cursor mutex before printing messages to avoid 
+    // save previous position y, x of cursor before printing messages
+    int prev_y, prev_x;
+    getyx(t_args.input_win, prev_y, prev_x);
+
+    // acquire cursor mutex before printing messages to avoid multiple threads
+    // moving the cursor at the same time
     pthread_mutex_lock(t_args.cursor_mutex);
     print_messages(t_args.chat_win, displayed_messages, cur_messages);
+
+    // move cursor back to input box
+    wmove(t_args.input_win, prev_y, prev_x);
+    wrefresh(t_args.input_win);
     pthread_mutex_unlock(t_args.cursor_mutex);
   }
 }
@@ -240,6 +250,7 @@ void start_chat(Queue* restrict message_queue, const Peer* restrict peer) {
 
   DequeuerArgs dequeuer_args = {
     .chat_win = chat_win,
+    .input_win = input_win,
     .max_messages = max_messages,
     .message_queue = message_queue,
     .cursor_mutex = &cursor_mutex
