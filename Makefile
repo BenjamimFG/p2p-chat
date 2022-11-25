@@ -1,7 +1,7 @@
 CC := gcc
 CFLAGS := -std=c17 -Wall -Wextra
 
-LIBS := ncurses pthread
+LIBS := ncursesw pthread
 LIB_FLAGS := $(addprefix -l,$(LIBS))
 
 SRC_DIR := src
