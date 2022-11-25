@@ -59,7 +59,9 @@ void queue_free(Queue* q) {
   Node* cur = q->head;
 
   while(cur != NULL) {
+    Node* next = cur->next;
     free(cur);
+    cur = next;
   }
 
   free(q);
