@@ -55,7 +55,7 @@ extern char* get_string(WINDOW* window, const int n, const char* prompt,
  * true if the char pressed was 'y' or 'Y', false otherwise.
  * This function sets noecho() and curs_set(0).
  * 
- * @param window Pointer ot the ncurses window to get the char from
+ * @param window Pointer to the ncurses window to get the char from
  * @param prompt Prompt to be shown to the user
  * @param start_y Y position to show prompt at
  * @param start_x X position to show prompt at
