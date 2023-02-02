@@ -162,6 +162,11 @@ void send_message(const int fd, const char* message) {
   send(fd, message, strlen(message), 0);
 }
 
+void send_disconnect_message(const int fd) {
+  char buffer[1] = {DISCONNECT};
+  send(fd, (void *) buffer, sizeof(buffer), 0);
+}
+
 void* message_polling(void* args) {
   MessagePollingArgs t_args = *(MessagePollingArgs*) args;
 
@@ -189,6 +194,11 @@ void* message_polling(void* args) {
 
     // read message from socket's fd into msg->content, read a maximum of MAX_MESSAGE_SIZE bytes
     recv(t_args.peer->fd, msg->content, MAX_MESSAGE_SIZE, 0);
+
+    if (msg->content[0] == DISCONNECT) {
+      t_args.peer->disconnected = true;
+      continue;
+    }
 
     // remove new line from message if it has one
     // the message shouldn't have a \n if sent through this client, but can

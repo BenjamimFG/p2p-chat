@@ -8,6 +8,7 @@
 
 #define MAX_USERNAME_SIZE 20
 #define MAX_MESSAGE_SIZE 80
+#define DISCONNECT 0x01
 
 typedef enum _server_state {
   WAITING_CONNECTIONS = 0,
@@ -21,6 +22,7 @@ typedef struct _peer {
   int fd;
   char username[MAX_USERNAME_SIZE + 1];
   char ipv4[16];
+  bool disconnected;
 } Peer;
 
 typedef struct _message {
@@ -97,5 +99,7 @@ void* message_polling(void* args);
  * @param message String that will be sent as a message through the socket
 */
 void send_message(const int fd, const char* message);
+
+void send_disconnect_message(const int fd);
 
 #endif

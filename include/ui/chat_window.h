@@ -21,6 +21,6 @@ typedef enum color_pairs {
  * @param message_queue Pointer to the queue that holds messages to be printed to the chat window
  * @param peer Peer struct of the connected peer
 */
-void start_chat(Queue* restrict message_queue, const Peer* restrict peer);
+void start_chat(Queue* restrict message_queue, Peer* restrict peer);
 
 #endif

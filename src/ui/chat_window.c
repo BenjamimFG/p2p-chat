@@ -169,6 +169,21 @@ void add_help_messages_to_queue(Queue* message_queue) {
   }
 }
 
+void add_peer_disconnected_message_to_queue(Queue* message_queue) {
+  char content[MAX_MESSAGE_SIZE] = "Peer has disconnected. Use /disconnect to leave this chat.";
+
+  Message* msg = (Message *) malloc(sizeof(Message));
+  memset(msg, 0, sizeof(Message));
+
+  strncpy(msg->username, "System", 7);
+  msg->username_color = SYSTEM_USERNAME_PAIR;
+
+  strncpy(msg->content, content, strlen(content));
+  get_time_str(msg->time_str);
+
+  queue_add(message_queue, (void *) msg);
+}
+
 /**
  * Thread function that dequeues messages and then prints then to chat window.
  * 
@@ -214,7 +229,7 @@ void* message_dequeuer(void* args) {
   }
 }
 
-void start_chat(Queue* restrict message_queue, const Peer* restrict peer) {
+void start_chat(Queue* restrict message_queue, Peer* restrict peer) {
   // initialize ncurses colors
   start_color();
 
@@ -268,6 +283,7 @@ void start_chat(Queue* restrict message_queue, const Peer* restrict peer) {
     pthread_mutex_unlock(&cursor_mutex);
 
     // construct message
+    // message is freed once it's dequeued
     Message* msg = (Message*) malloc(sizeof(Message));
     memset(msg, 0, sizeof(Message));
     
@@ -275,22 +291,28 @@ void start_chat(Queue* restrict message_queue, const Peer* restrict peer) {
     msg->username_color = SELF_USERNAME_PAIR;
 
     wgetnstr(input_win, msg->content, MAX_MESSAGE_SIZE);
-    get_time_str(msg->time_str);
+    get_time_str(msg->time_str);      
 
-    queue_add(message_queue, (void*) msg);
-
-    // if user's message starts with '/' treat is specially
+    // if user's message starts with '/' treat it specially
     if (starts_with(msg->content, '/')) {
+      queue_add(message_queue, (void*) msg);
+
       if (strcmp(msg->content, "/help") == 0) {
         add_help_messages_to_queue(message_queue);
       }
       else if (strcmp(msg->content, "/disconnect") == 0) {
         // end the event loop if user's message is /disconnect
+        // and send disconnect info to the peer
+        send_disconnect_message(peer->fd);
         break;
       }
     }
-    // else just send it
+    // if peer is disconnected show system message
+    else if (peer->disconnected) {
+        add_peer_disconnected_message_to_queue(message_queue);
+    }
     else {
+      queue_add(message_queue, (void*) msg);
       send_message(peer->fd, msg->content);
     }
   }
