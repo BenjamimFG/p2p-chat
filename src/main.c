@@ -155,6 +155,7 @@ int main(int argc, char const *argv[]) {
           draw_error_window(error_window, err_msg);
 
           // Reset connected_peer struct to 0
+          connected_peer = (Peer *) malloc(sizeof(Peer));
           memset(connected_peer, 0, sizeof(Peer));
 
           // Restart menu and server thread
